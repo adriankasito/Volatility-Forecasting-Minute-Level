@@ -197,7 +197,7 @@ class GarchModel:
 
         # Handle possible `IndexError`
         except:
-            raise Exception(f"No model trained for '{ticker}'.")
+            raise Exception(f"No model trained for '{self.ticker}'.")
 
         # Load model 
         self.model = joblib.load(model_path)

@@ -6,20 +6,19 @@
 # In[1]:
 
 
-get_ipython().run_line_magic('load_ext', 'autoreload')
-get_ipython().run_line_magic('autoreload', '2')
+%load_ext autoreload
+%autoreload 2
 import numpy as np
 import seaborn as sns
 import os
 import sqlite3
 from glob import glob
 import matplotlib.pyplot as plt
-get_ipython().run_line_magic('matplotlib', 'inline')
+%matplotlib inline
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 import joblib
 import pandas as pd
 import requests
-import wqet_grader
 from arch.univariate.base import ARCHModelResult
 from config import settings
 from data import AlphaVantageAPI, SQLRepository

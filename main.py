@@ -1,8 +1,9 @@
 import sqlite3
-
+import os
 from config import settings
 from data import SQLRepository
 from fastapi import FastAPI
+from fastapi.responses import FileResponse 
 from model import GarchModel
 from pydantic import BaseModel
 
@@ -58,8 +59,9 @@ def hello():
 
 @app.get("/favicon.ico", include_in_schema=False)
 def get_favicon():
-    favicon_path = os.path.join("/Users/baba/Downloads/", "favicon.ico")
+    favicon_path = "/Users/baba/Downloads/favicon.png"
     return FileResponse(favicon_path)
+
 
 
 @app.post("/fit", status_code=200, response_model=FitOut)
@@ -130,7 +132,8 @@ def fit_model(request: FitIn):
 def get_prediction(request: PredictIn):
 
     # Create `response` dictionary from `request`
-    response = request.dict()
+    #response = request.dict()
+    response = request
 
 
     # Create try block to handle exceptions
@@ -157,7 +160,7 @@ def get_prediction(request: PredictIn):
 
 
         # Add `"message"` key to `response`
-        response["message"] = ""
+        response["message"] = "Prediction Successful"
 
 
     # Create except block
@@ -172,7 +175,7 @@ def get_prediction(request: PredictIn):
 
 
         #  Add `"message"` key to `response`
-        repsonse["message"] = str(e)
+        response["message"] = str(e)
 
 
     # Return response
