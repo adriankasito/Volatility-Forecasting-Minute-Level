@@ -50,6 +50,8 @@ def build_model(ticker, use_new_data):
 
 app = FastAPI()
 
+# Mount the "static" directory containing your favicon.ico
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/", status_code=200)
 def hello():
