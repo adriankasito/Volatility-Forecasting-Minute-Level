@@ -59,7 +59,7 @@ def hello():
 
 @app.get("/favicon.ico", include_in_schema=False)
 def get_favicon():
-    favicon_path = "/Users/baba/Downloads/favicon.png"
+    favicon_path = "favicon.png"
     return FileResponse(favicon_path)
 
 
