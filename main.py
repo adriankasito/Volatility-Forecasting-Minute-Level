@@ -57,12 +57,6 @@ def hello():
     return {"message": "Welcome to the Volatility Forecasting Project!"}
 
 
-@app.get("/favicon.ico", include_in_schema=False)
-def get_favicon():
-    favicon_path = "favicon.png"
-    return FileResponse(favicon_path)
-
-
 
 @app.post("/fit", status_code=200, response_model=FitOut)
 def fit_model(request: FitIn):
