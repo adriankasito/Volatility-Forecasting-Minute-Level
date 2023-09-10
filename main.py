@@ -8,6 +8,11 @@ from model import GarchModel
 from pydantic import BaseModel
 
 
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8080)
+
+
 class FitIn(BaseModel):
     ticker:str
     use_new_data: bool
