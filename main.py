@@ -1,183 +1,192 @@
 import sqlite3
-import os
+from fastapi import FastAPI
+from starlette.responses import HTMLResponse
 from config import settings
 from data import SQLRepository
-from fastapi import FastAPI
-from fastapi.responses import FileResponse 
 from model import GarchModel
 from pydantic import BaseModel
 
-
-
 class FitIn(BaseModel):
-    ticker:str
+    ticker: str
     use_new_data: bool
     n_observations: int
     p: int
     q: int
 
-
 class FitOut(FitIn):
     success: bool
     message: str
-    
-
 
 class PredictIn(BaseModel):
     ticker: str
     n_minutes: int
-
 
 class PredictOut(PredictIn):
     success: bool
     forecast: dict
     message: str
 
-
 def build_model(ticker, use_new_data):
-
-    # Create DB connection
     connection = sqlite3.connect(settings.db_name, check_same_thread=False)
-
-    #Create `SQLRepository`
     repo = SQLRepository(connection=connection)
-
-    # Create model
     model = GarchModel(ticker=ticker, use_new_data=use_new_data, repo=repo)
-
-    #Return model
     return model
-
 
 app = FastAPI()
 
+@app.get("/", response_class=HTMLResponse)
+async def get_volatility_forecasts():
+    html_content = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Volatility Forecast</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f0f0f0;
+                text-align: center;
+            }
+            h1 {
+                color: #333;
+            }
+            .container {
+                background-color: #fff;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+                padding: 20px;
+                margin: 20px;
+            }
+            button {
+                background-color: #007bff;
+                color: #fff;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+            button:hover {
+                background-color: #0056b3;
+            }
+            #minutesSlider {
+                width: 80%;
+                margin: 10px auto;
+            }
+            table {
+                width: 80%;
+                margin: 20px auto;
+                border-collapse: collapse;
+                text-align: center;
+            }
+            th, td {
+                padding: 10px;
+                border-bottom: 1px solid #ddd;
+            }
+            .odd {
+                background-color: #f5f5f5;
+            }
+            .even {
+                background-color: #e0e0e0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Volatility Forecasting In Microsoft Corporation - Adrian Kasito!</h1>
+            <p>*Data Science*</p>
+            <label for="minutesSlider">Time range in minutes:</label>
+            <input type="range" min="1" max="10000" value="25" class="slider" id="minutesSlider">
+            <p id="selectedMinutes">Selected minutes: 25</p>
+            <button id="forecastButton">Get Volatility Forecast</button>
+            <table>
+                <tr>
+                    <th>Microsoft Corporation Volatility By Minute</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Volatility</th>
+                </tr>
+            </table>
+        </div>
+        <script>
+            document.getElementById("minutesSlider").addEventListener("input", function() {
+                document.getElementById("selectedMinutes").textContent = "Selected minutes: " + this.value;
+            });
 
-@app.get("/", status_code=200)
-def hello():
-    """Return dictionary with greeting message."""
-    return {"message": "Welcome to the Volatility Forecasting Project!"}
-
-
+            document.getElementById("forecastButton").addEventListener("click", function() {
+                const selectedMinutes = document.getElementById("minutesSlider").value;
+                fetch("/predict", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({"ticker": "MSFT", "n_minutes": selectedMinutes}),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const table = document.querySelector("table");
+                    table.innerHTML = `
+                        <tr>
+                            <th>MSFT</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Volatility</th>
+                        </tr>`;
+                    let rowNumber = 1;
+                    for (const [timestamp, volatility] of Object.entries(data.forecast)) {
+                        const [date, time] = timestamp.split("T");
+                        const className = rowNumber % 2 === 0 ? "even" : "odd";
+                        table.innerHTML += `
+                            <tr class="${className}">
+                                <td>${rowNumber}</td>
+                                <td>${date}</td>
+                                <td>${time}</td>
+                                <td>${volatility}</td>
+                            </tr>`;
+                        rowNumber++;
+                    }
+                })
+                .catch(error => {
+                    const table = document.querySelector("table");
+                    table.innerHTML = `<tr><td colspan="4">Error: ${error.message}</td></tr>`;
+                });
+            });
+        </script>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content, status_code=200)
 
 @app.post("/fit", status_code=200, response_model=FitOut)
 def fit_model(request: FitIn):
-
-    """Fit model, return confirmation message.
-
-    Parameters
-    ----------
-    request : FitIn
-
-    Returns
-    ------
-    dict
-        Must conform to `FitOut` class
-    """
-    # Create `response` dictionary from `request`
     response = request.dict()
-
-
-    # Create try block to handle exceptions
     try:
-
-        # Build model with `build_model` function
-        model = build_model(ticker = request.ticker, use_new_data=request.use_new_data)
-        
-
-        # Wrangle data
-        model.wrangle_data(n_observations = request.n_observations)
-
-
-        # Fit model
+        model = build_model(ticker=request.ticker, use_new_data=request.use_new_data)
+        model.wrangle_data(n_observations=request.n_observations)
         model.fit(p=request.p, q=request.q)
-
-
-        # Save model
-        filename= model.dump()
-        
-        # get AIC and BIC scores from the fitted model 
-        #aic = model.aic
-        #bic = model.bic
-
-
-        # Add `"success"` key to `response`
+        filename = model.dump()
         response["success"] = True
-
-
-        # Add `"message"` key to `response` with `filename`
         response["message"] = f"Trained and saved {filename}. Metrics: AIC {model.aic}, BIC {model.bic}."
-        
-
-    # Create except block
     except Exception as e:
-
-        # Add `"success"` key to `response`
         response["success"] = False
-
-
-        # Add `"message"` key to `response` with error message
         response["message"] = str(e)
-
-
-    # Return response
     return response
-
 
 @app.post("/predict", status_code=200, response_model=PredictOut)
 def get_prediction(request: PredictIn):
-
-    # Create `response` dictionary from `request`
-    #response = request.dict()
-    response = request
-
-
-    # Create try block to handle exceptions
+    response = request.dict()
     try:
-
-        # Build model with `build_model` function
-        model = build_model(ticker = request.ticker, use_new_data=False)
-
-
-        # Load stored model
+        model = build_model(ticker=request.ticker, use_new_data=False)
         model.load()
-
-
-        # Generate prediction
-        prediction = model.predict_volatility(horizon = request.n_minutes)
-
-
-        # Add `"success"` key to `response`
+        prediction = model.predict_volatility(horizon=request.n_minutes)
         response["success"] = True
-
-
-        # Add `"forecast"` key to `response`
         response["forecast"] = prediction
-
-
-        # Add `"message"` key to `response`
-        response["message"] = "Prediction Successful"
-
-
-    # Create except block
+        response["message"] = ""
     except Exception as e:
-
-        # Add `"success"` key to `response`
         response["success"] = False
-
-
-        # Add `"forecast"` key to `response`
         response["forecast"] = {}
-
-
-        #  Add `"message"` key to `response`
         response["message"] = str(e)
-
-
-    # Return response
     return response
-
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8080)
-
+    uvicorn.run(app, host="0.0.0.0", port=8000)
