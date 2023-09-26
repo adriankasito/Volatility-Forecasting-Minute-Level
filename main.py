@@ -92,8 +92,8 @@ async def get_volatility_forecasts():
     </head>
     <body>
         <div class="container">
-            <h1>Volatility Forecasting In Microsoft Corporation - Adrian Kasito!</h1>
-            <p>*Data Science*</p>
+            <h1>Volatility Forecasting In Microsoft Corporation</h1>
+            <p>Minute-level volatility forecasting for Microsoft involves predicting short-term price fluctuations in Microsoft Corporation's stock, utilizing historical data and statistical models. Traders and investors seek to leverage this information for various purposes, including executing precise short-term trading strategies, managing risk exposure, optimizing algorithmic trading algorithms, and making informed decisions in options trading and market timing. It aids in achieving more accurate entry and exit points and enhances portfolio optimization, making it a valuable tool for those navigating the dynamic landscape of financial markets and aiming to maximize returns while minimizing risk.</p>
             <label for="minutesSlider">Time range in minutes:</label>
             <input type="range" min="1" max="10000" value="25" class="slider" id="minutesSlider">
             <p id="selectedMinutes">Selected minutes: 25</p>
