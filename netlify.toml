@@ -1,0 +1,12 @@
+[build]
+  command = "echo 'Nothing to build'"  # FastAPI does not need building like static sites
+  functions = "serverless_functions"
+
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/serverless_function"
+
+[[headers]]
+  for = "/.netlify/functions/serverless_function"
+    [headers.values]
+      Access-Control-Allow-Origin = "*"

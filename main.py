@@ -1,12 +1,15 @@
 import os
 import sqlite3
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from starlette.responses import HTMLResponse
 from config import settings
 from data import SQLRepository
 from model import GarchModel
 from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
+
 
 import json
 
@@ -101,6 +104,11 @@ def get_prediction(request: PredictIn) -> PredictOut:
         response["forecast"] = {}
         response["message"] = str(e)
     return response
+# Serverless function
+@app.route("/.netlify/functions/serverless_function", methods=["GET"])
+async def serverless_function(request: Request):
+    """Serverless function"""
+    return JSONResponse(content={"message": "Hello from FastAPI serverless function!"}, status_code=200)
 
 if __name__ == "__main__":
     import uvicorn
